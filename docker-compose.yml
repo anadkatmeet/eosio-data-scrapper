@@ -1,0 +1,17 @@
+version: '2'
+services:
+  mongo:
+    image: "mongo:latest"
+    ports:
+     - "27017:27017"
+    volumes:
+     - /home/ameet/mongodata:/data/db
+  eosio:
+    image: "gcr.io/eoscanada-public/eosio-nodeos-full:v1.2.1"
+    ports:
+     - "8888:8888"
+     - "9876:9876"
+    volumes:
+     - /home/ameet/eosdatachallenge-master/nodeos-data:/nodeos-data
+     - /home/ameet/eosdatachallenge-master/nodeos-config:/nodeos-config
+     - /home/ameet/eosdatachallenge-master/output:/output
