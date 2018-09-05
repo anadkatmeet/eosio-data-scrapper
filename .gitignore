@@ -1,5 +1,4 @@
-idea
-lib
+.idea
 target/
 project/target
 *.iml
