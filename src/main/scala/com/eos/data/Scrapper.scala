@@ -57,10 +57,10 @@ object Scrapper extends App {
 
   private def extractNewAcountInfo(x: OptionalAccount): Account =
     Account(
-      x.account.get.toString(),
-      x.accountType.get.toString(),
-      x.creator.get.toString(),
-      x.name.get.toString()
+      x.account.get.as[String],
+      x.accountType.get.as[String],
+      x.creator.get.as[String],
+      x.name.get.as[String]
     )
 
 }

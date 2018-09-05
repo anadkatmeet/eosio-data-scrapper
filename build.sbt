@@ -7,7 +7,8 @@ scalaVersion := "2.12.6"
 libraryDependencies ++= Seq(
   "org.mongodb" % "mongo-java-driver" % "3.8.1",
   "com.typesafe.play" %% "play-json" % "2.6.10",
-  "commons-io" % "commons-io" % "2.6"
+  "commons-io" % "commons-io" % "2.6",
+  "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 )
 
 // Assembly
