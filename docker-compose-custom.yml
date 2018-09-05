@@ -8,7 +8,7 @@ services:
     - ${PWD}/mongodata:/data/db
     container_name: "mongo"
   app:
-    image: "anadkatmeet/eosio-data-scrapper"
+    build: .
     depends_on:
     - "mongo"
     links:
