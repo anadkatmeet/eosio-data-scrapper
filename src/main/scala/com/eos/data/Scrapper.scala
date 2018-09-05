@@ -21,29 +21,35 @@ object Scrapper extends App {
       .filter(_.getName.startsWith("dump-"))
       .foreach(file => {
         println(s"processing ${file.getName}")
-        Source.fromFile(file)
-          .getLines()
-          .filter(x => x.contains("HISTORY_TRACES")).toList.foreach(x => {
-          val doc = Json.parse(x.substring(x.indexOf('{'), x.lastIndexOf('}')+1))
-          val actSeq = doc \ "action_traces" \\ "act"
-          val li = actSeq
-            .map(x => OptionalAccount(
-              (x \ "account").toOption,
-              (x \ "name").toOption,
-              (x \ "data" \ "creator").toOption,
-              (x \ "data" \ "name").toOption)
-            )
-            .filter(_.isValid)
-            .map(x => Account(x.account.get.toString(), x.accountType.get.toString(), x.creator.get.toString(), x.name.get.toString()))
+        Source.fromFile(file).getLines()
+          .filter(x => x.contains("HISTORY_TRACES")).toList
+          .foreach(x => {
+            val doc = Json.parse(x.substring(x.indexOf('{'), x.lastIndexOf('}')+1))
+            val li = extractNewAcountInfo(doc \ "action_traces" \\ "act")
+            println(s"New accounts found in file ${file.getName} are ${li.size}")
+            if(li.nonEmpty) addToDb(li)
 
-          println(s"Total new accounts in file ${file.getName} are ${li.size}")
-          if(li.nonEmpty) addToDb(li)
-
-        })
+          })
         FileUtils.moveFile(file, new File(s"/output/processed/${file.getName}"))
       })
     Thread.sleep(10000)
   }
+
+  private def extractNewAcountInfo(actSeq: Seq[JsValue]): Seq[Account] =
+    actSeq
+      .map(x => OptionalAccount(
+        (x \ "account").toOption,
+        (x \ "name").toOption,
+        (x \ "data" \ "creator").toOption,
+        (x \ "data" \ "name").toOption)
+      )
+      .filter(_.isValid)
+      .map(x => Account(
+        x.account.get.toString(),
+        x.accountType.get.toString(),
+        x.creator.get.toString(),
+        x.name.get.toString())
+      )
 
 }
 
