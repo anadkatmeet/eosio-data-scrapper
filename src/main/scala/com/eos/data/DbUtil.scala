@@ -23,7 +23,7 @@ object DbUtil{
 
   def closeDb(): Unit = client.close()
 
-  def addToDb(li: Seq[Account]) = insert(db, getData(li))
+  def addToDb(li: Seq[Account]) = insert(getData(li))
 
   private def getData(li: Seq[Account]): Seq[Document] =
     li.map(x =>
@@ -31,7 +31,7 @@ object DbUtil{
       .append("name", x.name)
     )
 
-  private def insert(db: MongoDatabase, data: Seq[Document]): Unit =
+  private def insert(data: Seq[Document]): Unit =
     db.getCollection(collection).insertMany(data.asJava)
 
 }

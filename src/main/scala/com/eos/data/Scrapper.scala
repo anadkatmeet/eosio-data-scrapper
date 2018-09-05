@@ -11,45 +11,57 @@ import scala.io.Source
 object Scrapper extends App {
 
   println("Initializing Data Scrapper App")
+  private val inputPath = "/output/raw"
+  private val outputPath = "/output/processed"
 
   initializeDb()
   sys.addShutdownHook(closeDb())
 
   while(true){
-    println(s"Looping list")
-    new File("/output/raw").listFiles()
+    println(s"Checking for new files...")
+    new File(inputPath).listFiles()
       .filter(_.getName.startsWith("dump-"))
       .foreach(file => {
         println(s"processing ${file.getName}")
-        Source.fromFile(file).getLines()
-          .filter(x => x.contains("HISTORY_TRACES")).toList
-          .foreach(x => {
-            val doc = Json.parse(x.substring(x.indexOf('{'), x.lastIndexOf('}')+1))
-            val li = extractNewAcountInfo(doc \ "action_traces" \\ "act")
-            println(s"New accounts found in file ${file.getName} are ${li.size}")
-            if(li.nonEmpty) addToDb(li)
 
-          })
-        FileUtils.moveFile(file, new File(s"/output/processed/${file.getName}"))
+        val validNewAccounts = Source.fromFile(file).getLines()
+          .filter(validEvent)
+          .map(x => Json.parse(extractJsString(x)))
+          .flatMap(x => extractActionTraces(x))
+          .map(x => extractOptionalAcountInfo(x))
+          .filter(_.isValid)
+          .map(extractNewAcountInfo)
+          .toList
+
+        println(s"New accounts found in file ${file.getName} are ${validNewAccounts.size}")
+        if(validNewAccounts.nonEmpty) addToDb(validNewAccounts)
+
+        FileUtils.moveFile(file, new File(s"$outputPath/${file.getName}"))
       })
     Thread.sleep(10000)
   }
 
-  private def extractNewAcountInfo(actSeq: Seq[JsValue]): Seq[Account] =
-    actSeq
-      .map(x => OptionalAccount(
-        (x \ "account").toOption,
-        (x \ "name").toOption,
-        (x \ "data" \ "creator").toOption,
-        (x \ "data" \ "name").toOption)
-      )
-      .filter(_.isValid)
-      .map(x => Account(
-        x.account.get.toString(),
-        x.accountType.get.toString(),
-        x.creator.get.toString(),
-        x.name.get.toString())
-      )
+  private def validEvent(event: String): Boolean = event.contains("HISTORY_TRACES")
+
+  private def extractJsString(event: String) = event.substring(event.indexOf('{'), event.lastIndexOf('}')+1)
+
+  private def extractActionTraces(event: JsValue): Seq[JsValue] = event \ "action_traces" \\ "act"
+
+  private def extractOptionalAcountInfo(x: JsValue): OptionalAccount =
+    OptionalAccount(
+      (x \ "account").toOption,
+      (x \ "name").toOption,
+      (x \ "data" \ "creator").toOption,
+      (x \ "data" \ "name").toOption
+    )
+
+  private def extractNewAcountInfo(x: OptionalAccount): Account =
+    Account(
+      x.account.get.toString(),
+      x.accountType.get.toString(),
+      x.creator.get.toString(),
+      x.name.get.toString()
+    )
 
 }
 
