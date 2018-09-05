@@ -4,25 +4,34 @@ import com.mongodb.MongoClient
 import com.mongodb.client.MongoDatabase
 import org.bson.Document
 
+import collection.JavaConverters._
 import scala.util.Try
 
-object DbUtil {
+object DbUtil{
 
   private var client: MongoClient = _
-  private val db = client.getDatabase("foobar")
-  private val collection = "first"
-  db.createCollection("first")
-  insert(db, getData())
-  sys.addShutdownHook(client.close())
+  private var db: MongoDatabase = _
+  private val collection = "newaccount"
+  private val host = "mongo"
+  private val port = 27017
 
-  private def setupDb(): Try[Unit] = Try{client = new MongoClient("localhost", 27017)}
+  def initializeDb(): Unit = {
+    client = new MongoClient(host, port)
+    db = client.getDatabase("eosio")
+    Try(db.createCollection(collection))
+  }
 
-  private def getData(): Document =
-    new Document("name", "Meet")
-      .append("lname", "Anadkat")
-      .append("pkey", 1)
+  def closeDb(): Unit = client.close()
 
-  private def insert(db: MongoDatabase, document: Document): Unit =
-    db.getCollection(collection).insertOne(document)
+  def addToDb(li: Seq[Account]) = insert(db, getData(li))
+
+  private def getData(li: Seq[Account]): Seq[Document] =
+    li.map(x =>
+      new Document("creator", x.creator)
+      .append("name", x.name)
+    )
+
+  private def insert(db: MongoDatabase, data: Seq[Document]): Unit =
+    db.getCollection(collection).insertMany(data.asJava)
 
 }
