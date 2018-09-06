@@ -26,7 +26,7 @@ Step 2: docker-compose up
 
 Step 1: sbt assembly (Note: you will need Scala Build Tool to run this) 
 
-Step 1: ./boot.sh | split -d --lines 100 - eosio-output/raw/dump-
+Step 2: ./boot.sh | split -d --lines 100 - eosio-output/raw/dump-
 
-Step 2: docker-compose up --build
+Step 3: docker-compose up --build
 
